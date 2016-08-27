@@ -3,6 +3,8 @@ using System.Collections;
 
 public class QuadMain : MonoBehaviour {
 
+    public float Sensitivity;
+
     public float Kp;
     public float Ki;
     public float Kd;
@@ -16,6 +18,9 @@ public class QuadMain : MonoBehaviour {
     private const int PITCH_SENSITIVITY = 0;
     private const int ROLL_SENSITIVITY = 1;
 
+    private float pitch, roll, yaw;
+    private float height = 5;
+    
     private PID pidController;
 
     private int engineTestI = 4;
@@ -42,13 +47,15 @@ public class QuadMain : MonoBehaviour {
             Application.Quit();
         }
 
+        CheckUserInp();
+
         //Switch between test engine, where 4 is off
         if (Input.GetKeyUp(KeyCode.T))
         {
             engineTestI = (engineTestI + 1) % 5;
             print("Engine: " + engineTestI);
         }
-
+        
     }
 
     void FixedUpdate()
@@ -58,20 +65,29 @@ public class QuadMain : MonoBehaviour {
             SetPwr(engineTestI, 1);
         }
 
-        
 
         if (!laughAtMe)
         {
-            AltHold(5);
-            KeepPitch(0);
-            KeepRoll(0);
+            AltHold(height);
+            KeepPitch(pitch);
+            KeepRoll(roll);
         }
         else
         {
             AltHold(5);
-            //NaiveKeepPitch(0);
-            //NaiveKeepRoll(0);
+            NaiveKeepPitch(0);
+            NaiveKeepRoll(0);
         }
+    }
+
+    private void CheckUserInp()
+    {
+        pitch = Input.GetAxis("pitch")* Sensitivity;
+        roll = Input.GetAxis("roll")* Sensitivity;
+        yaw = Input.GetAxis("yaw")* Sensitivity;
+        height += Input.GetAxis("alt");
+
+        print(pitch);
     }
 
     private void SetPwr(int engineIndex, float thrust)
@@ -97,7 +113,7 @@ public class QuadMain : MonoBehaviour {
     }
 
     private void KeepPitch(float degrees)
-    { 
+    {    
         float output = pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
 
         SetPwr(0, -output);
@@ -160,7 +176,7 @@ public class QuadMain : MonoBehaviour {
         }
     }
 
-    private void AltHold(int alt)
+    private void AltHold(float alt)
     {
         float pwr = 0;
 
