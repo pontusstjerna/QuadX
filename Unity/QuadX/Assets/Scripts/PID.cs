@@ -13,7 +13,7 @@ public class PID {
     private float currOutput = 0;
     private float timeChange = 0;
 
-    private const int SAMPLE_TIME = 1000;
+    private const float SAMPLE_TIME = 1.0f;
 
     public PID(float Kp, float Ki, float Kd)
     {
@@ -24,21 +24,14 @@ public class PID {
 
     public float Output(float setPoint, float position, float dTime)
     {
-        if(timeChange >= SAMPLE_TIME)
-        {
-            float error = GetError(setPoint, position, dTime);
-            errSum = (errSum + error * timeChange) / Time.frameCount;
-
-            timeChange = 0;
-            currOutput = Kp * error + Ki * errSum + Kd * GetDerivative(error, dTime);
-            return currOutput;
-        }
-
-        timeChange += dTime*1000f;
+        float error = GetError(setPoint, position, dTime);
+        errSum += error*dTime;
+          
+        currOutput = Kp * error + Ki * errSum + Kd * GetDerivative(error, dTime);
         return currOutput;
     }
 	
-    private float GetError(float setPoint, float position, float dTime)
+    public float GetError(float setPoint, float position, float dTime)
     {
         return (setPoint - position);
     }

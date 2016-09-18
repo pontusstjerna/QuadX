@@ -66,18 +66,20 @@ public class QuadMain : MonoBehaviour {
         }
 
 
-        if (!laughAtMe)
-        {
-            AltHold(height);
-            KeepPitch(pitch);
-            KeepRoll(roll);
-        }
-        else
-        {
-            AltHold(5);
-            NaiveKeepPitch(0);
-            NaiveKeepRoll(0);
-        }
+        /*  if (!laughAtMe)
+          {
+              AltHold(height);
+              KeepPitch(pitch);
+              KeepRoll(roll);
+          }
+          else
+          {
+              AltHold(5);
+              NaiveKeepPitch(0);
+              NaiveKeepRoll(0);
+          }*/
+
+        SetMotors();
     }
 
     private void CheckUserInp()
@@ -87,7 +89,24 @@ public class QuadMain : MonoBehaviour {
         yaw = Input.GetAxis("yaw")* Sensitivity;
         height += Input.GetAxis("alt");
 
-        print(pitch);
+        //print(pitch);
+    }
+
+    private void SetMotors()
+    {
+        /*
+         * engines.setEngineSpeed(LEFT_FRONT_MOTOR, throttle - rollAdjust - pitchAdjust + headingAdjust);
+      engines.setEngineSpeed(RIGHT_FRONT_MOTOR, throttle + rollAdjust - pitchAdjust - headingAdjust);
+      engines.setEngineSpeed(LEFT_REAR_MOTOR, throttle - rollAdjust + pitchAdjust - headingAdjust);
+      engines.setEngineSpeed(RIGHT_REAR_MOTOR, throttle + rollAdjust + pitchAdjust + headingAdjust);
+         */
+
+        print(pidController.GetError(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime));
+
+        SetPwr(0, GetThrottle(height) + RollPid(roll) - PitchPid(pitch));
+        SetPwr(1, GetThrottle(height) + RollPid(roll) + PitchPid(pitch));
+        SetPwr(2, GetThrottle(height) - RollPid(roll) + PitchPid(pitch));
+        SetPwr(3, GetThrottle(height) - RollPid(roll) - PitchPid(roll));
     }
 
     private void SetPwr(int engineIndex, float thrust)
@@ -130,6 +149,37 @@ public class QuadMain : MonoBehaviour {
         SetPwr(1, output);
         SetPwr(2, -output);
         SetPwr(3, -output);
+    }
+
+    private float GetThrottle(float alt)
+    {
+        float pwr = 0;
+
+        if (body.position.y < alt && body.velocity.y > 0)
+        {
+            pwr = (alt - body.position.y) / 4;
+        }
+        else if (body.position.y < alt && body.velocity.y < 0)
+        {
+            pwr = 1;
+        }
+        else
+        {
+            //Smooth out
+            //pwr = 0.5f / (body.position.y - alt);
+        }
+
+        return pwr;
+    }
+
+    private float RollPid(float degrees)
+    {
+        return pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
+    }
+
+    private float PitchPid(float degrees)
+    {
+        return pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
     }
 
     private float Get180(float angle)
