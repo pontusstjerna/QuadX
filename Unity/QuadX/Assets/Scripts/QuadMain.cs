@@ -4,14 +4,15 @@ using System.Collections;
 public class QuadMain : MonoBehaviour {
 
     public float Sensitivity;
+    public float ControllerInput;
+    public float Threshold;
 
     public float Kp;
     public float Ki;
     public float Kd;
 
-    public bool laughAtMe = false;
-
     private Vector3[] engines;
+    private enum engineNames { FRONT_RIGHT, REAR_RIGHT, REAR_LEFT, FRONT_LEFT};
     private Rigidbody body;
 
     private const int ENGINE_MAX_PWR = 7;
@@ -23,7 +24,7 @@ public class QuadMain : MonoBehaviour {
     
     private PID pidController;
 
-    private int engineTestI = 4;
+    private int engineTestIndex = 0;
 
 	// Use this for initialization
 	void Start () {
@@ -35,7 +36,7 @@ public class QuadMain : MonoBehaviour {
 
         body = GetComponent<Rigidbody>();
 
-        pidController = new global::PID(Kp, Ki, Kd);
+        pidController = new PID(Kp, Ki, Kd, Threshold);
     }
 	
 	// Update is called once per frame
@@ -52,32 +53,18 @@ public class QuadMain : MonoBehaviour {
         //Switch between test engine, where 4 is off
         if (Input.GetKeyUp(KeyCode.T))
         {
-            engineTestI = (engineTestI + 1) % 5;
-            print("Engine: " + engineTestI);
+            engineTestIndex = (engineTestIndex + 1) % 5;
+            print("Engine: " + engineTestIndex);
         }
         
     }
 
     void FixedUpdate()
     {
-        if(engineTestI < 4)
+        if(engineTestIndex > 0)
         {
-            SetPwr(engineTestI, 1);
+            SetPwr(engineTestIndex-1, 0.7f);
         }
-
-
-        /*  if (!laughAtMe)
-          {
-              AltHold(height);
-              KeepPitch(pitch);
-              KeepRoll(roll);
-          }
-          else
-          {
-              AltHold(5);
-              NaiveKeepPitch(0);
-              NaiveKeepRoll(0);
-          }*/
 
         SetMotors();
     }
@@ -92,21 +79,19 @@ public class QuadMain : MonoBehaviour {
         //print(pitch);
     }
 
+    public Rigidbody GetBody()
+    {
+        return body;
+    }
+
     private void SetMotors()
     {
-        /*
-         * engines.setEngineSpeed(LEFT_FRONT_MOTOR, throttle - rollAdjust - pitchAdjust + headingAdjust);
-      engines.setEngineSpeed(RIGHT_FRONT_MOTOR, throttle + rollAdjust - pitchAdjust - headingAdjust);
-      engines.setEngineSpeed(LEFT_REAR_MOTOR, throttle - rollAdjust + pitchAdjust - headingAdjust);
-      engines.setEngineSpeed(RIGHT_REAR_MOTOR, throttle + rollAdjust + pitchAdjust + headingAdjust);
-         */
+        print(pidController.GetOutput(0, Get180(body.rotation.eulerAngles.z), Time.deltaTime));
 
-        print(pidController.GetError(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime));
-
-        SetPwr(0, GetThrottle(height) + RollPid(roll) - PitchPid(pitch));
-        SetPwr(1, GetThrottle(height) + RollPid(roll) + PitchPid(pitch));
-        SetPwr(2, GetThrottle(height) - RollPid(roll) + PitchPid(pitch));
-        SetPwr(3, GetThrottle(height) - RollPid(roll) - PitchPid(roll));
+        SetPwr(0, GetThrottle(height) + RollPid(roll)/2 - PitchPid(pitch)/2 + GetControlRoll()/2 - GetControlPitch()/2);
+        SetPwr(1, GetThrottle(height) + RollPid(roll)/2 + PitchPid(pitch)/2 + GetControlRoll()/2 + GetControlPitch()/2);
+        SetPwr(2, GetThrottle(height) - RollPid(roll)/2 + PitchPid(pitch)/2 - GetControlRoll()/2 + GetControlPitch()/2);
+        SetPwr(3, GetThrottle(height) - RollPid(roll)/2 - PitchPid(pitch)/2 - GetControlRoll()/2 - GetControlPitch()/2);
     }
 
     private void SetPwr(int engineIndex, float thrust)
@@ -119,36 +104,6 @@ public class QuadMain : MonoBehaviour {
             thrust = -1;
         }
         body.AddForceAtPosition(transform.TransformDirection(Vector3.up) * ENGINE_MAX_PWR * thrust, engines[engineIndex]);
-    }
-
-    private void KeepAlt(float height)
-    {
-        float output = pidController.Output(height, body.position.y, Time.deltaTime);
-
-        SetPwr(0, output);
-        SetPwr(3, output);
-        SetPwr(1, output);
-        SetPwr(2, output);
-    }
-
-    private void KeepPitch(float degrees)
-    {    
-        float output = pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
-
-        SetPwr(0, -output);
-        SetPwr(3, -output);
-        SetPwr(1, output);
-        SetPwr(2, output);
-    }
-
-    private void KeepRoll(float degrees)
-    {
-        float output = pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
-
-        SetPwr(0, output);
-        SetPwr(1, output);
-        SetPwr(2, -output);
-        SetPwr(3, -output);
     }
 
     private float GetThrottle(float alt)
@@ -174,12 +129,22 @@ public class QuadMain : MonoBehaviour {
 
     private float RollPid(float degrees)
     {
-        return pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
+        return pidController.GetOutput(Get180(degrees), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
     }
 
     private float PitchPid(float degrees)
     {
-        return pidController.Output(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
+        return pidController.GetOutput(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
+    }
+
+    private float GetControlRoll()
+    {
+        return roll*ControllerInput;
+    }
+
+    private float GetControlPitch()
+    {
+        return pitch*ControllerInput;
     }
 
     private float Get180(float angle)
@@ -194,59 +159,5 @@ public class QuadMain : MonoBehaviour {
             return angle + 360;
         }
         return angle;
-    }
-
-    // ------------------OLD CODE TO LAUGH AT -------------------------------
-
-    private void NaiveKeepPitch(float degrees)
-    {
-        if (Get180(body.rotation.eulerAngles.x - degrees) > PITCH_SENSITIVITY)
-        {
-            SetPwr(0, 0.5f);
-            SetPwr(3, 0.5f);
-        }
-        else if (Get180(body.rotation.eulerAngles.x - degrees) < PITCH_SENSITIVITY)
-        {
-            SetPwr(0, 0);
-            SetPwr(3, 0);
-        }
-    }
-
-    private void NaiveKeepRoll(float degrees)
-    {
-        if (Get180(body.rotation.eulerAngles.z - degrees) > ROLL_SENSITIVITY)
-        {
-            SetPwr(0, 0);
-            SetPwr(1, 0);
-        }
-        else if (Get180(body.rotation.eulerAngles.z - degrees) < ROLL_SENSITIVITY)
-        {
-            SetPwr(0, 0.5f);
-            SetPwr(1, 0.5f);
-        }
-    }
-
-    private void AltHold(float alt)
-    {
-        float pwr = 0;
-
-        if (body.position.y < alt && body.velocity.y > 0)
-        {
-            pwr = (alt - body.position.y) / 4;
-        }
-        else if (body.position.y < alt && body.velocity.y < 0)
-        {
-            pwr = 1;
-        }
-        else
-        {
-            //Smooth out
-            //pwr = 0.5f / (body.position.y - alt);
-        }
-
-        for (int i = 0; i < engines.Length; i++)
-        {
-            SetPwr(i, pwr);
-        }
     }
 }
