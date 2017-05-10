@@ -12,6 +12,13 @@ public class QuadMain : MonoBehaviour {
     public float Kd;
 
     private Vector3[] engines;
+    private Vector3[] engineVectors = new Vector3[]
+    {
+        new Vector3(4.5f, 0, 4.5f),
+        new Vector3(4.5f, 0, -4.5f),
+        new Vector3(-4.5f, 0, -4.5f),
+        new Vector3(-4.5f, 0, 4.5f)
+    };
     private enum engineNames { FRONT_RIGHT, REAR_RIGHT, REAR_LEFT, FRONT_LEFT};
     private Rigidbody body;
 
@@ -26,17 +33,21 @@ public class QuadMain : MonoBehaviour {
 
     private int engineTestIndex = 0;
 
+    private GameObject[] engineMarkers;
+
 	// Use this for initialization
 	void Start () {
         engines = new Vector3[4];
-        engines[0] = transform.TransformPoint(new Vector3(4.5f, 0, 4.5f));
-        engines[1] = transform.TransformPoint(new Vector3(4.5f, 0, -4.5f));
-        engines[2] = transform.TransformPoint(new Vector3(-4.5f, 0, -4.5f));
-        engines[3] = transform.TransformPoint(new Vector3(-4.5f, 0, 4.5f));
 
         body = GetComponent<Rigidbody>();
 
         pidController = new PID(Kp, Ki, Kd, Threshold);
+
+        engineMarkers = new GameObject[] {
+            GameObject.CreatePrimitive(PrimitiveType.Sphere),
+            GameObject.CreatePrimitive(PrimitiveType.Sphere),
+            GameObject.CreatePrimitive(PrimitiveType.Sphere),
+            GameObject.CreatePrimitive(PrimitiveType.Sphere)};
     }
 	
 	// Update is called once per frame
@@ -61,12 +72,15 @@ public class QuadMain : MonoBehaviour {
 
     void FixedUpdate()
     {
+        UpdateEnginePositions();
+
         if(engineTestIndex > 0)
         {
             SetPwr(engineTestIndex-1, 0.7f);
         }
 
         SetMotors();
+        PaintEngines();
     }
 
     private void CheckUserInp()
@@ -104,6 +118,12 @@ public class QuadMain : MonoBehaviour {
             thrust = -1;
         }
         body.AddForceAtPosition(transform.TransformDirection(Vector3.up) * ENGINE_MAX_PWR * thrust, engines[engineIndex]);
+    }
+
+    private void UpdateEnginePositions()
+    {
+        for (int i = 0; i < engines.Length; i++)
+            engines[i] = transform.TransformPoint(engineVectors[i]);
     }
 
     private float GetThrottle(float alt)
@@ -159,5 +179,13 @@ public class QuadMain : MonoBehaviour {
             return angle + 360;
         }
         return angle;
+    }
+
+    private void PaintEngines()
+    {
+        for(int i = 0; i < engineMarkers.Length; i++)
+        {
+            engineMarkers[i].transform.position = engines[i];
+        }
     }
 }
