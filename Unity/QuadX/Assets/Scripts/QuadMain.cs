@@ -5,7 +5,6 @@ public class QuadMain : MonoBehaviour {
 
     public float Sensitivity;
     public float ControllerInput;
-    public float Threshold;
 
     public float Kp;
     public float Ki;
@@ -35,19 +34,20 @@ public class QuadMain : MonoBehaviour {
 
     private GameObject[] engineMarkers;
 
-	// Use this for initialization
-	void Start () {
+// Use this for initialization
+void Start () {
         engines = new Vector3[4];
 
         body = GetComponent<Rigidbody>();
 
-        pidController = new PID(Kp, Ki, Kd, Threshold);
+        pidController = new PID(Kp, Ki, Kd);
 
         engineMarkers = new GameObject[] {
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
-            GameObject.CreatePrimitive(PrimitiveType.Sphere)};
+            GameObject.CreatePrimitive(PrimitiveType.Sphere)
+            };
     }
 	
 	// Update is called once per frame
