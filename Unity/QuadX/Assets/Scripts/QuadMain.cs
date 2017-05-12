@@ -4,22 +4,25 @@ using System.Collections;
 public class QuadMain : MonoBehaviour {
 
     public float Sensitivity;
-    public float ControllerInput;
 
     public float Kp;
     public float Ki;
     public float Kd;
 
-    private Vector3[] engines;
+    public bool ShowEngineMarkers;
+
+    public Rigidbody body { get; private set;}
+
+    private Vector3[] enginePositions;
     private Vector3[] engineVectors = new Vector3[]
     {
-        new Vector3(4.5f, 0, 4.5f),
-        new Vector3(4.5f, 0, -4.5f),
-        new Vector3(-4.5f, 0, -4.5f),
-        new Vector3(-4.5f, 0, 4.5f)
+        new Vector3(4.3f, 0, 4.3f),
+        new Vector3(4.3f, 0, -4.3f),
+        new Vector3(-4.3f, 0, -4.3f),
+        new Vector3(-4.3f, 0, 4.3f)
     };
+
     private enum engineNames { FRONT_RIGHT, REAR_RIGHT, REAR_LEFT, FRONT_LEFT};
-    private Rigidbody body;
 
     private const int ENGINE_MAX_PWR = 7;
 
@@ -29,20 +32,18 @@ public class QuadMain : MonoBehaviour {
     private PID pidRoll;
     private PID pidPitch;
     private PID pidAlt;
-
-    private int engineTestIndex = 0;
-
+    
     private GameObject[] engineMarkers;
 
     // Use this for initialization
     void Start () {
-        engines = new Vector3[4];
+        enginePositions = new Vector3[4];
 
         body = GetComponent<Rigidbody>();
 
         pidRoll = new PID(Kp, Ki, Kd);
         pidPitch = new PID(Kp, Ki, Kd);
-        pidAlt = new PID(0.5f, Ki, Kd);
+        pidAlt = new PID(0.5f, Ki, 0.3f);
 
         engineMarkers = new GameObject[] {
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
@@ -62,14 +63,6 @@ public class QuadMain : MonoBehaviour {
         }
 
         CheckUserInp();
-
-        //Switch between test engine, where 4 is off
-        if (Input.GetKeyUp(KeyCode.T))
-        {
-            engineTestIndex = (engineTestIndex + 1) % 5;
-            print("Engine: " + engineTestIndex);
-        }
-
         CheckAdjustments();
     }
 
@@ -80,12 +73,6 @@ public class QuadMain : MonoBehaviour {
         pidAlt.Update(height, body.transform.position.y, Time.deltaTime);
 
         UpdateEnginePositions();
-
-        if(engineTestIndex > 0)
-        {
-            SetPwr(engineTestIndex-1, 0.7f);
-        }
-
         SetMotors();
         PaintEngines();
     }
@@ -96,11 +83,6 @@ public class QuadMain : MonoBehaviour {
         roll = Input.GetAxis("roll")* Sensitivity;
         yaw = Input.GetAxis("yaw")* Sensitivity;
         height += Input.GetAxis("alt") * Time.deltaTime * Sensitivity / 3 ;
-    }
-
-    public Rigidbody GetBody()
-    {
-        return body;
     }
 
     private void SetMotors()
@@ -120,13 +102,13 @@ public class QuadMain : MonoBehaviour {
         {
             thrust = -1;
         }
-        body.AddForceAtPosition(transform.TransformDirection(Vector3.up) * ENGINE_MAX_PWR * thrust, engines[engineIndex]);
+        body.AddForceAtPosition(transform.TransformDirection(Vector3.up) * ENGINE_MAX_PWR * thrust, enginePositions[engineIndex]);
     }
 
     private void UpdateEnginePositions()
     {
-        for (int i = 0; i < engines.Length; i++)
-            engines[i] = transform.TransformPoint(engineVectors[i]);
+        for (int i = 0; i < enginePositions.Length; i++)
+            enginePositions[i] = transform.TransformPoint(engineVectors[i]);
     }
 
     private float Get180(float angle)
@@ -147,7 +129,7 @@ public class QuadMain : MonoBehaviour {
     {
         for(int i = 0; i < engineMarkers.Length; i++)
         {
-            engineMarkers[i].transform.position = engines[i];
+            engineMarkers[i].transform.position = enginePositions[i];
         }
     }
 
