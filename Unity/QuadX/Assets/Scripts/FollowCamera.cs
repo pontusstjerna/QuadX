@@ -14,10 +14,10 @@ public class FollowCamera : MonoBehaviour {
 
 	void Start () {
         quad = quadObj.GetComponent<QuadMain>();
-        offset = transform.position - quad.GetBody().transform.position;
+        offset = transform.position - quad.body.transform.position;
 	}
 	
 	void LateUpdate () {
-        transform.position = quad.GetBody().transform.position + offset;
+        transform.position = quad.body.transform.position + offset;
     }
 }
