@@ -22,27 +22,27 @@ public class QuadMain : MonoBehaviour {
     private Rigidbody body;
 
     private const int ENGINE_MAX_PWR = 7;
-    private const int PITCH_SENSITIVITY = 0;
-    private const int ROLL_SENSITIVITY = 1;
 
     private float pitch, roll, yaw;
     private float height = 5;
     
-    private PID pidController;
-    private PID pidPitchController;
+    private PID pidRoll;
+    private PID pidPitch;
+    private PID pidAlt;
 
     private int engineTestIndex = 0;
 
     private GameObject[] engineMarkers;
 
-// Use this for initialization
-void Start () {
+    // Use this for initialization
+    void Start () {
         engines = new Vector3[4];
 
         body = GetComponent<Rigidbody>();
 
-        pidController = new PID(Kp, Ki, Kd);
-        pidPitchController = new PID(1, 0, 0);
+        pidRoll = new PID(Kp, Ki, Kd);
+        pidPitch = new PID(Kp, Ki, Kd);
+        pidAlt = new PID(0.5f, Ki, Kd);
 
         engineMarkers = new GameObject[] {
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
@@ -71,11 +71,14 @@ void Start () {
         }
 
         CheckAdjustments();
-        
     }
 
     void FixedUpdate()
     {
+        pidRoll.Update(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
+        pidPitch.Update(Get180(pitch), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
+        pidAlt.Update(height, body.transform.position.y, Time.deltaTime);
+
         UpdateEnginePositions();
 
         if(engineTestIndex > 0)
@@ -85,11 +88,6 @@ void Start () {
 
         SetMotors();
         PaintEngines();
-
-        //print(pidController.GetErrorSum());
-
-        float err = pidController.GetError(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
-        print("Der/Err/Sum: " + pidController.GetDerivative(err, Time.deltaTime) + ":" + err*Time.deltaTime + ":" + pidController.GetErrorSum());
     }
 
     private void CheckUserInp()
@@ -97,9 +95,7 @@ void Start () {
         pitch = Input.GetAxis("pitch")* Sensitivity;
         roll = Input.GetAxis("roll")* Sensitivity;
         yaw = Input.GetAxis("yaw")* Sensitivity;
-        height += Input.GetAxis("alt") * Time.deltaTime ;
-
-        //print(pitch);
+        height += Input.GetAxis("alt") * Time.deltaTime * Sensitivity / 3 ;
     }
 
     public Rigidbody GetBody()
@@ -109,12 +105,10 @@ void Start () {
 
     private void SetMotors()
     {
-        //print(pidController.GetOutput(0, Get180(body.rotation.eulerAngles.z), Time.deltaTime));
-
-        SetPwr(0, GetThrottle(height) + RollPid(roll) / 2 - PitchPid(pitch) / 2);
-        SetPwr(1, GetThrottle(height) + RollPid(roll) / 2 + PitchPid(pitch) / 2);
-        SetPwr(2, GetThrottle(height) - RollPid(roll) / 2 + PitchPid(pitch) / 2);
-        SetPwr(3, GetThrottle(height) - RollPid(roll) / 2 - PitchPid(pitch) / 2);
+        SetPwr(0, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
+        SetPwr(1, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
+        SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
+        SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
     }
 
     private void SetPwr(int engineIndex, float thrust)
@@ -133,47 +127,6 @@ void Start () {
     {
         for (int i = 0; i < engines.Length; i++)
             engines[i] = transform.TransformPoint(engineVectors[i]);
-    }
-
-    private float GetThrottle(float alt)
-    {
-        float pwr = 0;
-
-        if (body.position.y < alt && body.velocity.y > 0)
-        {
-            pwr = (alt - body.position.y) / 4;
-        }
-        else if (body.position.y < alt && body.velocity.y < 0)
-        {
-            pwr = 1;
-        }
-        else
-        {
-            //Smooth out
-            //pwr = 0.5f / (body.position.y - alt);
-        }
-
-        return pwr;
-    }
-
-    private float RollPid(float degrees)
-    {
-        return pidController.GetOutput(Get180(degrees), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
-    }
-
-    private float PitchPid(float degrees)
-    {
-        return pidPitchController.GetOutput(Get180(degrees), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
-    }
-
-    private float GetControlRoll()
-    {
-        return roll*ControllerInput;
-    }
-
-    private float GetControlPitch()
-    {
-        return pitch*ControllerInput;
     }
 
     private float Get180(float angle)
@@ -203,29 +156,29 @@ void Start () {
         if (Input.GetKey(KeyCode.LeftShift))
         {
             if (Input.GetKeyUp(KeyCode.P))
-                pidController.Kp -= 0.1f;
+                pidRoll.Kp -= 0.1f;
 
             if (Input.GetKeyUp(KeyCode.I))
-                pidController.Ki -= 0.01f;
+                pidRoll.Ki -= 0.01f;
 
             if (Input.GetKeyUp(KeyCode.O))
-                pidController.Kd -= 0.1f;
+                pidRoll.Kd -= 0.1f;
         }
         else
         {
             if (Input.GetKeyUp(KeyCode.P))
-                pidController.Kp += 0.1f;
+                pidRoll.Kp += 0.1f;
 
             if (Input.GetKeyUp(KeyCode.I))
-                pidController.Ki += 0.01f;
+                pidRoll.Ki += 0.01f;
 
             if (Input.GetKeyUp(KeyCode.O))
-                pidController.Kd += 0.1f;
+                pidRoll.Kd += 0.1f;
         }
 
 
-        Kp = pidController.Kp;
-        Ki = pidController.Ki;
-        Kd = pidController.Kd;
+        Kp = pidRoll.Kp;
+        Ki = pidRoll.Ki;
+        Kd = pidRoll.Kd;
     }
 }

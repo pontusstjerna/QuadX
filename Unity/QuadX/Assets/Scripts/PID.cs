@@ -6,9 +6,16 @@ public class PID {
     public float Ki { get; set; }
     public float Kd { get; set; }
 
+    private float error = 0;
+    private float integral = 0;
+    private float derivative = 0;
+
     private float lastError = 0;
+    
     private float lastDtime = 0;
-    private float errSum = 0;
+    
+    private const float sampleTime = 0.01f; //100ms
+    private float currentTime = 0;
 
     public PID(float Kp, float Ki, float Kd)
     {
@@ -17,30 +24,39 @@ public class PID {
         this.Kd = Kd;
     }
 
-    public float GetOutput(float setPoint, float position, float dTime)
+    public void Update(float setPoint, float position, float dTime)
     {
-        float error = GetError(setPoint, position, dTime);
-        errSum += error*dTime;
+        if(currentTime >= sampleTime)
+        {
+            error = GetError(setPoint, position);
+            derivative = GetDerivative(error);
+            integral += error*sampleTime;
+            currentTime = 0;
+        }
+        currentTime += dTime;
+    }
 
-        return Kp * error*dTime + Ki * errSum * dTime + Kd * GetDerivative(error, dTime);
+    public float GetOutput()
+    {
+        return Kp * error + Ki * integral + Kd * derivative;
     }
 	
-    public float GetError(float setPoint, float position, float dTime)
+    private float GetError(float setPoint, float position)
     {
       return (setPoint - position);
     }
 
-    public float GetDerivative(float error, float dTime)
+    private float GetDerivative(float error)
     {
-        float derivative = dTime*(error*dTime - lastError) / 1;
+        float derivative = (error - lastError) / sampleTime;
 
         lastError = error;
 
         return derivative;
     }
 
-    public float GetErrorSum()
+    private float GetErrorSum()
     {
-        return errSum;
+        return integral;
     }
 }
