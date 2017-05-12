@@ -2,9 +2,9 @@
 using System.Collections;
 
 public class PID {
-    private float Kp = 0;
-    private float Ki = 0;
-    private float Kd = 0;
+    public float Kp { get; set; }
+    public float Ki { get; set; }
+    public float Kd { get; set; }
 
     private float lastError = 0;
     private float lastDtime = 0;
@@ -20,9 +20,9 @@ public class PID {
     public float GetOutput(float setPoint, float position, float dTime)
     {
         float error = GetError(setPoint, position, dTime);
-        errSum += error;
+        errSum += error*dTime;
 
-        return Kp * error + Ki * errSum + Kd * GetDerivative(error);
+        return Kp * error*dTime + Ki * errSum * dTime + Kd * GetDerivative(error, dTime);
     }
 	
     public float GetError(float setPoint, float position, float dTime)
@@ -30,12 +30,17 @@ public class PID {
       return (setPoint - position);
     }
 
-    public float GetDerivative(float error)
+    public float GetDerivative(float error, float dTime)
     {
-        float derivative = (error - lastError) / 1;
+        float derivative = dTime*(error*dTime - lastError) / 1;
 
         lastError = error;
 
         return derivative;
+    }
+
+    public float GetErrorSum()
+    {
+        return errSum;
     }
 }
