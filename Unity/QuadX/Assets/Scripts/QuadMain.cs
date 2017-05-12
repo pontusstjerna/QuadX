@@ -68,13 +68,12 @@ public class QuadMain : MonoBehaviour {
 
     void FixedUpdate()
     {
-        pidRoll.Update(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
-        pidPitch.Update(Get180(pitch), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
-        pidAlt.Update(height, body.transform.position.y, Time.deltaTime);
-
+        UpdatePIDs();
         UpdateEnginePositions();
         SetMotors();
-        PaintEngines();
+
+        if(ShowEngineMarkers)
+            PaintEngines();
     }
 
     private void CheckUserInp()
@@ -83,6 +82,13 @@ public class QuadMain : MonoBehaviour {
         roll = Input.GetAxis("roll")* Sensitivity;
         yaw = Input.GetAxis("yaw")* Sensitivity;
         height += Input.GetAxis("alt") * Time.deltaTime * Sensitivity / 3 ;
+    }
+
+    private void UpdatePIDs()
+    {
+        pidRoll.Update(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
+        pidPitch.Update(Get180(pitch), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
+        pidAlt.Update(height, body.transform.position.y, Time.deltaTime);
     }
 
     private void SetMotors()
@@ -163,4 +169,6 @@ public class QuadMain : MonoBehaviour {
         Ki = pidRoll.Ki;
         Kd = pidRoll.Kd;
     }
+
+    //TURNING
 }
