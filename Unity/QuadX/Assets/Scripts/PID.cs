@@ -40,6 +40,11 @@ public class PID {
     {
         return Kp * error + Ki * integral + Kd * derivative;
     }
+
+    public float GetError()
+    {
+        return error;
+    }
 	
     private float GetError(float setPoint, float position)
     {

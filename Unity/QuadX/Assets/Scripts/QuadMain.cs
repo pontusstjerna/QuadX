@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class QuadMain : MonoBehaviour {
+public partial class QuadMain : MonoBehaviour {
 
     public float Sensitivity;
 
@@ -20,6 +20,12 @@ public class QuadMain : MonoBehaviour {
         new Vector3(4.3f, 0, -4.3f),
         new Vector3(-4.3f, 0, -4.3f),
         new Vector3(-4.3f, 0, 4.3f)
+    };
+
+    private Vector3[] torques = new Vector3[]
+    {
+        new Vector3(0,0,-1),
+        new Vector3(0,0,1)
     };
 
     private enum engineNames { FRONT_RIGHT, REAR_RIGHT, REAR_LEFT, FRONT_LEFT};
@@ -51,6 +57,12 @@ public class QuadMain : MonoBehaviour {
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
             GameObject.CreatePrimitive(PrimitiveType.Sphere)
             };
+
+        foreach (GameObject obj in engineMarkers)
+        {
+            obj.GetComponent<Collider>().enabled = false;
+            obj.transform.localScale = body.transform.localScale;
+        }
     }
 	
 	// Update is called once per frame
@@ -97,6 +109,8 @@ public class QuadMain : MonoBehaviour {
         SetPwr(1, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
+
+
     }
 
     private void SetPwr(int engineIndex, float thrust)
@@ -109,6 +123,7 @@ public class QuadMain : MonoBehaviour {
             thrust = -1;
         }
         body.AddForceAtPosition(transform.TransformDirection(Vector3.up) * ENGINE_MAX_PWR * thrust, enginePositions[engineIndex]);
+        AddTorqueAtPosition(torques[engineIndex % 2]*thrust*250, enginePositions[engineIndex]);
     }
 
     private void UpdateEnginePositions()
@@ -171,4 +186,34 @@ public class QuadMain : MonoBehaviour {
     }
 
     //TURNING
+    private void AddTorqueAtPosition(Vector3 torque, Vector3 position)
+    {
+        //http://forum.unity3d.com/threads/torque-at-offset.187297/
+        Vector3 torqueAxis = torque.normalized;
+        Vector3 ortho = new Vector3(1, 0, 0);
+        // prevent torqueAxis and ortho from pointing in the same direction
+        if ((torqueAxis - ortho).sqrMagnitude < float.Epsilon)
+        {
+            ortho = new Vector3(0, 1, 0);
+        }
+
+        var orthoNorm = OrthoNormalize(torqueAxis, ortho);
+
+
+        // calculate force
+        Vector3 force = Vector3.Cross(0.5f * torque, orthoNorm);
+        body.AddForceAtPosition(force, position + orthoNorm);
+        body.AddForceAtPosition(-force, position - orthoNorm);
+    }
+
+    private Vector3 OrthoNormalize(Vector3 vector1, Vector3 vector2)
+    {
+        vector1.Normalize();
+        Vector3 temp = Vector3.Cross(vector1, vector2);
+        temp.Normalize();
+        vector2 = Vector3.Cross(temp, vector2);
+        return vector2;
+        //var output = new Vector3[] {vector1, vector2};
+        //return output;
+    }
 }
