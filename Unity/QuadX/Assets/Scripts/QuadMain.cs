@@ -28,6 +28,8 @@ public partial class QuadMain : MonoBehaviour {
         new Vector3(0,0,1)
     };
 
+    private Propeller[] propellers = new Propeller[4];
+
     private enum engineNames { FRONT_RIGHT, REAR_RIGHT, REAR_LEFT, FRONT_LEFT};
 
     private const int ENGINE_MAX_PWR = 7;
@@ -62,6 +64,16 @@ public partial class QuadMain : MonoBehaviour {
         {
             obj.GetComponent<Collider>().enabled = false;
             obj.transform.localScale = body.transform.localScale;
+        }
+
+        propellers[0] = GameObject.Find("propFrontLeft").GetComponent<Propeller>();
+        propellers[1] = GameObject.Find("propFrontRight").GetComponent<Propeller>();
+        propellers[2] = GameObject.Find("propRearRight").GetComponent<Propeller>();
+        propellers[3] = GameObject.Find("propRearLeft").GetComponent<Propeller>();
+
+        for(int i = 0; i < propellers.Length; i++)
+        {
+            propellers[i].SetPosition(enginePositions[i], i);
         }
     }
 	
@@ -110,7 +122,16 @@ public partial class QuadMain : MonoBehaviour {
         SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
 
+        /*propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
+        propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
+        propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
+        propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
+        */
 
+        propellers[0].SetPwr(yaw);
+        propellers[1].SetPwr(-yaw);
+        propellers[2].SetPwr(yaw);
+        propellers[3].SetPwr(-yaw);
     }
 
     private void SetPwr(int engineIndex, float thrust)
