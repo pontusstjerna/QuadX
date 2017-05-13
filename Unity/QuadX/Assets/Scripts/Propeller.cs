@@ -33,7 +33,7 @@ public class Propeller : MonoBehaviour {
 
     public void SetPosition(Vector3 position, int engineIndex)
     {
-        body.transform.position = position;
+        transform.position = position;
         this.engineIndex = engineIndex;
     }
 

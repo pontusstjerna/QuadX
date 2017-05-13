@@ -21,7 +21,8 @@ public class FollowCamera : MonoBehaviour {
         transform.position = quad.body.transform.position + offset;
         Vector3 qPos = quad.body.transform.position;
         float rotY = Mathf.Deg2Rad*quad.body.transform.rotation.eulerAngles.y;
-        float offsetLengthXZ = Mathf.Sqrt(Mathf.Pow(offset.x - qPos.x, 2) + Mathf.Pow(offset.z - qPos.z, 2));
+        float offsetLengthXZ = -Mathf.Sqrt(Mathf.Pow(offset.x, 2) + Mathf.Pow(offset.z, 2));
         transform.position = new Vector3(qPos.x + Mathf.Sin(rotY)*offsetLengthXZ, qPos.y + offset.y, qPos.z + Mathf.Cos(rotY) * offsetLengthXZ);
+        transform.LookAt(qPos);
     }
 }

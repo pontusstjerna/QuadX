@@ -40,6 +40,7 @@ public partial class QuadMain : MonoBehaviour {
     private PID pidRoll;
     private PID pidPitch;
     private PID pidAlt;
+    private PID pidYaw;
     
     private GameObject[] engineMarkers;
 
@@ -52,6 +53,7 @@ public partial class QuadMain : MonoBehaviour {
         pidRoll = new PID(Kp, Ki, Kd);
         pidPitch = new PID(Kp, Ki, Kd);
         pidAlt = new PID(0.5f, Ki, 0.3f);
+        pidYaw = new PID(0.5f, 0.0f, 0.4f);
 
         engineMarkers = new GameObject[] {
             GameObject.CreatePrimitive(PrimitiveType.Sphere),
@@ -104,8 +106,10 @@ public partial class QuadMain : MonoBehaviour {
     {
         pitch = Input.GetAxis("pitch")* Sensitivity;
         roll = Input.GetAxis("roll")* Sensitivity;
-        yaw = Input.GetAxis("yaw")* Sensitivity;
-        height += Input.GetAxis("alt") * Time.deltaTime * Sensitivity / 3 ;
+        yaw = Get180(yaw + Input.GetAxis("yaw") * Sensitivity * Time.deltaTime * 2);
+        height = height + Input.GetAxis("alt") * Time.deltaTime * Sensitivity / 3;
+
+        print(yaw);
     }
 
     private void UpdatePIDs()
@@ -113,6 +117,7 @@ public partial class QuadMain : MonoBehaviour {
         pidRoll.Update(Get180(roll), Get180(body.rotation.eulerAngles.z), Time.deltaTime);
         pidPitch.Update(Get180(pitch), Get180(body.rotation.eulerAngles.x), Time.deltaTime);
         pidAlt.Update(height, body.transform.position.y, Time.deltaTime);
+        pidYaw.Update(yaw, Get180(body.transform.rotation.eulerAngles.y), Time.deltaTime);
     }
 
     private void SetMotors()
@@ -122,10 +127,10 @@ public partial class QuadMain : MonoBehaviour {
         SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
 
-        propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 - yaw/2);
-        propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 + yaw/2);
-        propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 - yaw/2);
-        propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 + yaw/2);
+        propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
+        propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 - pidYaw.GetOutput() / 2);
+        propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
+        propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 - pidYaw.GetOutput() / 2);
     }
 
     private void SetPwr(int engineIndex, float thrust)
