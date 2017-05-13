@@ -6,8 +6,8 @@ public class Propeller : MonoBehaviour {
     Rigidbody body;
     private Vector3[] torques = new Vector3[]
     {
-        new Vector3(0,-1,0),
-        new Vector3(0,1,0)
+        new Vector3(0,1,0),
+        new Vector3(0,-1,0)
     };
 
     private const int MAX_ENGINE_PWR = 7;
@@ -28,7 +28,7 @@ public class Propeller : MonoBehaviour {
     void FixedUpdate()
     {
 
-        body.AddRelativeTorque(torques[engineIndex % 2]*thrust*MAX_ENGINE_PWR);
+        body.AddRelativeTorque(torques[engineIndex % 2]*thrust*MAX_ENGINE_PWR*20);
     }
 
     public void SetPosition(Vector3 position, int engineIndex)

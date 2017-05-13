@@ -122,16 +122,10 @@ public partial class QuadMain : MonoBehaviour {
         SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
 
-        /*propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
-        propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
-        propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
-        propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
-        */
-
-        propellers[0].SetPwr(yaw);
-        propellers[1].SetPwr(-yaw);
-        propellers[2].SetPwr(yaw);
-        propellers[3].SetPwr(-yaw);
+        propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 - yaw/2);
+        propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 + yaw/2);
+        propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 - yaw/2);
+        propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 + yaw/2);
     }
 
     private void SetPwr(int engineIndex, float thrust)
