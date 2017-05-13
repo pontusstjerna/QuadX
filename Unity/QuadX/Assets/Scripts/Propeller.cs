@@ -10,9 +10,10 @@ public class Propeller : MonoBehaviour {
         new Vector3(0,-1,0)
     };
 
-    private const int MAX_ENGINE_PWR = 7;
     private int engineIndex;
     private float thrust = 1;
+
+    private const int MAX_ENGINE_PWR = 7;
 
     // Use this for initialization
     void Start () {
@@ -27,8 +28,8 @@ public class Propeller : MonoBehaviour {
 
     void FixedUpdate()
     {
+        body.AddRelativeTorque(torques[engineIndex % 2]*thrust*20);
         body.AddForce(transform.TransformDirection(Vector3.up) * MAX_ENGINE_PWR * thrust);
-        body.AddRelativeTorque(torques[engineIndex % 2]*thrust*MAX_ENGINE_PWR*20);
     }
 
     public void SetPosition(Vector3 position, int engineIndex)
@@ -45,9 +46,9 @@ public class Propeller : MonoBehaviour {
         {
             thrust = 1;
         }
-        else if (thrust < -1)
+        else if (thrust < 0)
         {
-            thrust = -1;
+            thrust = 0;
         }
     }
 }

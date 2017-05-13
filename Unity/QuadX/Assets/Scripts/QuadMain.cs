@@ -11,7 +11,7 @@ public partial class QuadMain : MonoBehaviour {
     
     public Rigidbody body { get; private set;}
 
-    private bool enginesOn = true;
+    private bool enginesOn = false;
     
     private Vector3[] engineVectors = new Vector3[]
     {
@@ -51,6 +51,8 @@ public partial class QuadMain : MonoBehaviour {
         {
             propellers[i].SetPosition(transform.TransformPoint(engineVectors[i]), i);
         }
+
+        Reset();
     }
 	
 	// Update is called once per frame
@@ -82,7 +84,7 @@ public partial class QuadMain : MonoBehaviour {
         if (Input.GetKeyUp(KeyCode.Space))
         {
             enginesOn = !enginesOn;
-            if (!enginesOn) Reset();
+            if (enginesOn) Reset();
         }
 
         print(yaw);
@@ -100,10 +102,10 @@ public partial class QuadMain : MonoBehaviour {
     {
         if (enginesOn)
         {
-            propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
-            propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 - pidYaw.GetOutput() / 2);
-            propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
-            propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 - pidYaw.GetOutput() / 2);
+            propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() - pidPitch.GetOutput() + pidYaw.GetOutput());
+            propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() + pidPitch.GetOutput() - pidYaw.GetOutput());
+            propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() + pidPitch.GetOutput() + pidYaw.GetOutput());
+            propellers[3].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() - pidPitch.GetOutput() - pidYaw.GetOutput());
         }
         else
         {
