@@ -40,5 +40,14 @@ public class Propeller : MonoBehaviour {
     public void SetPwr(float thrust)
     {
         this.thrust = thrust;
+        if (thrust > 1)
+        {
+            thrust = 1;
+        }
+        else if (thrust < -1)
+        {
+            thrust = -1;
+        }
+        body.AddForce(transform.TransformDirection(Vector3.up) * MAX_ENGINE_PWR * thrust);
     }
 }

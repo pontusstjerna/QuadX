@@ -12,8 +12,6 @@ public class PID {
 
     private float lastError = 0;
     
-    private float lastDtime = 0;
-    
     private const float sampleTime = 0.01f; //100ms
     private float currentTime = 0;
 

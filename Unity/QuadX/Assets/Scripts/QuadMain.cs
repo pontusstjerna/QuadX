@@ -122,11 +122,11 @@ public partial class QuadMain : MonoBehaviour {
 
     private void SetMotors()
     {
-        SetPwr(0, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
+     /*   SetPwr(0, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
         SetPwr(1, pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(2, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2);
         SetPwr(3, pidAlt.GetOutput() - pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2);
-
+     */
         propellers[0].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 - pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
         propellers[1].SetPwr(pidAlt.GetOutput() + pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 - pidYaw.GetOutput() / 2);
         propellers[2].SetPwr(pidAlt.GetOutput() - pidRoll.GetOutput() / 2 + pidPitch.GetOutput() / 2 + pidYaw.GetOutput() / 2);
